@@ -11,7 +11,8 @@ def init_db():
      seedbox_name text NOT NULL,
      last_update_date date DEFAULT (datetime('now','localtime')),
      is_file integer DEFAULT 0,
-     downloaded integer DEFAULT 0
+     downloaded integer DEFAULT 0,
+     hidden integer DEFAULT 0
      )"""
     downloads = """CREATE TABLE IF NOT EXISTS downloads (
      seedbox_name text NOT NULL,
@@ -23,10 +24,11 @@ def init_db():
      is_movie integer DEFAULT 0,
      download_start date DEFAULT NULL,
      download_date date DEFAULT NULL,
-     is_file integer DEFAULT 0
+     is_file integer DEFAULT 0 
      )"""
     c.execute(table_sql)
     c.execute(downloads)
+    conn.commit()
 def get_connection():
     conn = sqlite3.connect(DATABASEPATH)
     return conn

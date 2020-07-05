@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 from flask import Flask
-from flask import render_template
+from flask import render_template, redirect,url_for
 import os
 import logging
 import datetime
 from db_utils import get_connection, get_size
 import pandas as pd
 from app_configs import FTP_MOUNT, PLEX_MOUNT
-log_file = 'base_app.log'
+file_path = os.path.dirname(os.path.abspath(__file__))
+log_file = os.path.join(file_path, 'base_app.log')
 logging.basicConfig(level=logging.DEBUG,
                             format="%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
                             filename=log_file)
@@ -18,11 +19,32 @@ pd.set_option('display.max_colwidth', -1)
 @app.route('/')
 def base_app():
     conn = get_connection()
-    df = pd.read_sql("select * from available_dls",conn)
+    df = pd.read_sql("select * from available_dls where hidden = 0",conn)
     df['download_file'] = df.apply(lambda x: """<a href="{}/{}">DOWNLOAD FILE</a>""".format(x['seedbox_name'],x['is_file']),axis=1)
-    raw_html = df.to_html(escape=False)
+    df['hide_file'] = df['seedbox_name'].apply(lambda x: """<a href="{}/hide">HIDE FILE</a>""".format(x))
+    raw_html = df[['last_update_date','seedbox_name','download_file','hide_file']].sort_values(by='last_update_date',ascending=False).to_html(escape=False)
     return render_template('base.html',title = "AVAILABLE TO DOWNLOAD LIST",rawhtml=raw_html)
 
+@app.route('/hiddenfiles')
+def hidden_files():
+    conn = get_connection()
+    df = pd.read_sql("select * from available_dls where hidden =1",conn)
+    df['unhide_file'] = df['seedbox_name'].apply(lambda x: """<a href="{}/unhide">UNHIDE FILE</a>""".format(x))
+    raw_html = df[['last_update_date','seedbox_name','unhide_file']].sort_values(by='last_update_date',ascending=False).to_html(escape=False)
+    return render_template('base.html',title = "HIDDEN FILE LIST",rawhtml=raw_html)
+
+@app.route("/<file>/<action>")
+def hide_file(file,action):
+    conn = get_connection()
+    curs = conn.cursor()
+    if action == 'hide':
+        curs.execute("update available_dls set hidden=1 where seedbox_name = '{}'".format(file))
+        conn.commit()
+        return redirect('/')
+    if action == 'unhide':
+        curs.execute("update available_dls set hidden=0 where seedbox_name = '{}'".format(file))
+        conn.commit()
+        return redirect('/hiddenfiles')
 @app.route("/<file>/<int:is_file>")
 def show_dl(file,is_file):
     conn = get_connection()
