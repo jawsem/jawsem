@@ -12,3 +12,13 @@ This will create a simple web application that will list the files and directori
 Cron jobs run hourly to check if there are updated movies and daily to download files (downloading occurs at night as not to interfere with normal activities).
 
 You can specify your mounted directories in app_configs.py.  It will route the files based on whether you choose a movie or directory.
+
+You can add ftp information into the mountftp script in the cron scripts to automatically create the mount to the FTP on load.
+
+example to add to crontab
+
+*@reboot sleep 90 && bash ./plex_app/cron_scripts/mountftp start*
+
+programs needed:
+python - pandas, numpy
+bash - curlftps, 7zip

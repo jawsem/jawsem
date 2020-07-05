@@ -1,0 +1,43 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:  mountftp
+# Required-Start: 
+# Required-Stop: 
+# Default-Start: 1 2 3 4 5 
+# Default-Stop: 0 6 
+# Short-Description: Startup/Shutdown the curlftpfs
+# Description: This file is used on start up to connect to the seebox specified in the credentials
+### END INIT INFO
+# Run-level Startup script for curlftpfs
+#
+# chkconfig: 345 91 19
+
+# FTP user, password, and host (you can specify the port also eg. ftp.example.com:2002)
+ftpUser=*SAMPLE_USERNAME*
+ftpPass=*SAMPLE_PASSWORD*
+ftpHost=*SAMPLE_FTP_HOST:SAMPLE_PORT*
+
+# Mounted to folder
+mPath="/mnt/seedbox/"
+
+# Create the mounted to dir if doesn't exist
+if [ ! -d $mPath ]; then
+    mkdir -p $mPath
+fi
+
+case "$1" in
+    start)
+        curlftpfs $ftpHost $mPath -o ssl,user=$ftpUser:$ftpPass,allow_other
+        ;;
+    stop)
+        fusermount -u $mPath        
+        ;;
+    reload|restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 start|stop|restart|reload"
+        exit 1
+esac
+exit 0
