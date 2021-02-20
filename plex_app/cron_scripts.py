@@ -1,11 +1,10 @@
 from db_utils import get_connection
-from app_configs import FTP_MOUNT, PLEX_MOUNT
+from app_configs import FTP_MOUNT, PLEX_MOUNT,TRANS_MOUNT,TRANSFER_FILE,logging
 import os
 import pandas as pd
 import datetime
 import shutil
 import sys
-from main import logging 
 import subprocess
 
 def update_available_dls():
@@ -71,6 +70,7 @@ def download_files():
         logging.info("File: {} has finished downloading to path: {}".format(row[1]['seedbox_name'],dl_path1))
         logging.info("Trying to extract files")
         try:
+            os.chdir('/home/pi/PlexApp/plex_app')
             output = subprocess.call("bash extract.sh {}".format(dl_path1),shell=True)
             if output==0:
                 logging.info("Files Extracted")
@@ -78,6 +78,17 @@ def download_files():
                 logging.info("Output = {}: Failed to extract".format(output))
         except Exception as e:
             logging.debug("Error extracting file {}".format(e))
+        if TRANSFER_FILE:
+            logging.info("Trying to transfer files")
+            try:
+                if movie==1:
+                    add_path=os.path.join(TRANS_MOUNT,'movies')
+                else:
+                    add_path=os.path.join(TRANS_MOUNT,'tvshows')
+                shutil.copytree(dl_path1,os.path.join(add_path,os.path.basename(dl_path1)))
+                logging.debug("File {} transferred to {}".format(dl_path1,add_path))
+            except Exception as e:
+                logging.debug("Error transfering file {}".format(e))
 if __name__ == '__main__':
     script = 'update'
     if len(sys.argv)>1:

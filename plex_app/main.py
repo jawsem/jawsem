@@ -3,16 +3,11 @@
 from flask import Flask
 from flask import render_template, redirect,url_for
 import os
-import logging
 import datetime
 from db_utils import get_connection, get_size
 import pandas as pd
-from app_configs import FTP_MOUNT, PLEX_MOUNT
-file_path = os.path.dirname(os.path.abspath(__file__))
-log_file = os.path.join(file_path, 'base_app.log')
-logging.basicConfig(level=logging.DEBUG,
-                            format="%(asctime)s %(levelname)s %(threadName)s %(name)s %(message)s",
-                            filename=log_file)
+from app_configs import FTP_MOUNT, PLEX_MOUNT,logging
+from cron_scripts import download_files, update_available_dls
 
 app = Flask(__name__)
 pd.set_option('display.max_colwidth', -1)
@@ -24,7 +19,14 @@ def base_app():
     df['hide_file'] = df['seedbox_name'].apply(lambda x: """<a href="{}/hide">HIDE FILE</a>""".format(x))
     raw_html = df[['last_update_date','seedbox_name','download_file','hide_file']].sort_values(by='last_update_date',ascending=False).to_html(escape=False)
     return render_template('base.html',title = "AVAILABLE TO DOWNLOAD LIST",rawhtml=raw_html)
-
+@app.route('/download')
+def download():
+    download_files()
+    return redirect('/')
+@app.route('/update')
+def update():
+    update_available_dls()
+    return redirect('/')
 @app.route('/hiddenfiles')
 def hidden_files():
     conn = get_connection()
