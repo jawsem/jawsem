@@ -85,8 +85,11 @@ def download_files():
                     add_path=os.path.join(TRANS_MOUNT,'movies')
                 else:
                     add_path=os.path.join(TRANS_MOUNT,'tvshows')
-                shutil.copytree(dl_path1,os.path.join(add_path,os.path.basename(dl_path1)))
-                logging.debug("File {} transferred to {}".format(dl_path1,add_path))
+                if is_file==1:
+                    shutil.copy2(dl_path1,add_path)
+                else:    
+                    shutil.copytree(dl_path1,os.path.join(add_path,os.path.basename(dl_path1)))
+                    logging.debug("File {} transferred to {}".format(dl_path1,add_path))
             except Exception as e:
                 logging.debug("Error transfering file {}".format(e))
 if __name__ == '__main__':
